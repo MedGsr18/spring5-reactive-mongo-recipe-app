@@ -2,17 +2,17 @@ package guru.springframework.services;
 
 import guru.springframework.commands.RecipeCommand;
 import guru.springframework.domain.Recipe;
-
-import java.util.Set;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 /**
  * Created by jt on 6/13/17.
  */
 public interface RecipeService {
 
-    Set<Recipe> getRecipes();
+    Flux<Recipe> getRecipes();
 
-    Recipe findById(String id);
+    Mono<Recipe> findById(String id);
 
     RecipeCommand findCommandById(String id);
 

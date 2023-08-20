@@ -3,16 +3,19 @@ package guru.springframework.services;
 import guru.springframework.commands.UnitOfMeasureCommand;
 import guru.springframework.converters.UnitOfMeasureToUnitOfMeasureCommand;
 import guru.springframework.domain.UnitOfMeasure;
-import guru.springframework.repositories.UnitOfMeasureRepository;
+import guru.springframework.repositories.reactive.UnitOfMeasureMongoRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import reactor.core.publisher.Flux;
 
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.Mockito.*;
 
 public class UnitOfMeasureServiceImplTest {
@@ -21,13 +24,13 @@ public class UnitOfMeasureServiceImplTest {
     UnitOfMeasureService service;
 
     @Mock
-    UnitOfMeasureRepository unitOfMeasureRepository;
+    UnitOfMeasureMongoRepository unitOfMeasureMongoRepository;
 
     @Before
     public void setUp() throws Exception {
         MockitoAnnotations.initMocks(this);
 
-        service = new UnitOfMeasureServiceImpl(unitOfMeasureRepository, unitOfMeasureToUnitOfMeasureCommand);
+        service = new UnitOfMeasureServiceImpl(unitOfMeasureMongoRepository, unitOfMeasureToUnitOfMeasureCommand);
     }
 
     @Test
@@ -42,14 +45,15 @@ public class UnitOfMeasureServiceImplTest {
         uom2.setId("2");
         unitOfMeasures.add(uom2);
 
-        when(unitOfMeasureRepository.findAll()).thenReturn(unitOfMeasures);
+        when(unitOfMeasureMongoRepository.findAll()).thenReturn(Flux.fromStream(unitOfMeasures.stream()));
 
         //when
-        Set<UnitOfMeasureCommand> commands = service.listAllUoms();
+        Flux<UnitOfMeasureCommand> commands = service.listAllUoms();
 
         //then
-        assertEquals(2, commands.size());
-        verify(unitOfMeasureRepository, times(1)).findAll();
+        assertNotNull(commands);
+        assertEquals(2L, commands.count().block().longValue());
+        verify(unitOfMeasureMongoRepository, times(1)).findAll();
     }
 
 }

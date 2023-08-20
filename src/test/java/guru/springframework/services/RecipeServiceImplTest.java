@@ -7,14 +7,18 @@ import guru.springframework.converters.RecipeToRecipeCommand;
 import guru.springframework.domain.Recipe;
 import guru.springframework.exceptions.NotFoundException;
 import guru.springframework.repositories.RecipeRepository;
+import guru.springframework.repositories.reactive.RecipeMongoRepository;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -28,7 +32,7 @@ public class RecipeServiceImplTest {
     RecipeServiceImpl recipeService;
 
     @Mock
-    RecipeRepository recipeRepository;
+    RecipeMongoRepository recipeRepository;
 
     @Mock
     RecipeToRecipeCommand recipeToRecipeCommand;
@@ -49,9 +53,9 @@ public class RecipeServiceImplTest {
         recipe.setId("1");
         Optional<Recipe> recipeOptional = Optional.of(recipe);
 
-        when(recipeRepository.findById(anyString())).thenReturn(recipeOptional);
+        when(recipeRepository.findById(anyString())).thenReturn(Mono.justOrEmpty(recipeOptional));
 
-        Recipe recipeReturned = recipeService.findById("1");
+        Recipe recipeReturned = recipeService.findById("1").block();
 
         assertNotNull("Null recipe returned", recipeReturned);
         verify(recipeRepository, times(1)).findById(anyString());
@@ -63,9 +67,9 @@ public class RecipeServiceImplTest {
 
         Optional<Recipe> recipeOptional = Optional.empty();
 
-        when(recipeRepository.findById(anyString())).thenReturn(recipeOptional);
+        when(recipeRepository.findById(anyString())).thenReturn(Mono.justOrEmpty(recipeOptional));
 
-        Recipe recipeReturned = recipeService.findById("1");
+        Recipe recipeReturned = recipeService.findById("1").block();
 
         //should go boom
     }
@@ -76,7 +80,7 @@ public class RecipeServiceImplTest {
         recipe.setId("1");
         Optional<Recipe> recipeOptional = Optional.of(recipe);
 
-        when(recipeRepository.findById(anyString())).thenReturn(recipeOptional);
+        when(recipeRepository.findById(anyString())).thenReturn(Mono.justOrEmpty(recipeOptional));
 
         RecipeCommand recipeCommand = new RecipeCommand();
         recipeCommand.setId("1");
@@ -97,9 +101,9 @@ public class RecipeServiceImplTest {
         HashSet receipesData = new HashSet();
         receipesData.add(recipe);
 
-        when(recipeService.getRecipes()).thenReturn(receipesData);
+        when(recipeService.getRecipes()).thenReturn(Flux.fromStream(receipesData.stream()));
 
-        Set<Recipe> recipes = recipeService.getRecipes();
+        Set<Recipe> recipes = recipeService.getRecipes().collect(Collectors.toSet()).block();
 
         assertEquals(recipes.size(), 1);
         verify(recipeRepository, times(1)).findAll();

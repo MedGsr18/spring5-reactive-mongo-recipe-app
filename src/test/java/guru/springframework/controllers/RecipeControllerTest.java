@@ -11,6 +11,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import reactor.core.publisher.Mono;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -47,7 +48,7 @@ public class RecipeControllerTest {
         Recipe recipe = new Recipe();
         recipe.setId("1");
 
-        when(recipeService.findById(anyString())).thenReturn(recipe);
+        when(recipeService.findById(anyString())).thenReturn(Mono.justOrEmpty(recipe));
 
         mockMvc.perform(get("/recipe/1/show"))
                 .andExpect(status().isOk())
